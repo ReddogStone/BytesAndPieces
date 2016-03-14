@@ -3,20 +3,18 @@
 <head>
   <meta charset="utf-8">
   
-  <title>About Me | Bytes And Pieces</title>
+  <title>Game Logic That Behaves - Part 2 | Bytes And Pieces</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="My name is Elshad Shirinov and I am a passionate programmer, software architect, game developer, team lead and code optimizer. I started learning about programming more than 20 years ago and have been">
-<meta property="og:type" content="website">
-<meta property="og:title" content="About Me">
-<meta property="og:url" content="http://reddogstone.github.io/about/index.html">
+  <meta name="description" content="In Part 1 we have seen some basic UI done with behaviors. Now on to some game logic. Let’s make a shooting turret, Scorched Earth style. We will introduce two new concepts. First, we define an update-">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Game Logic That Behaves - Part 2">
+<meta property="og:url" content="http://reddogstone.github.io/2016/03/14/behaviors2/index.html">
 <meta property="og:site_name" content="Bytes And Pieces">
-<meta property="og:description" content="My name is Elshad Shirinov and I am a passionate programmer, software architect, game developer, team lead and code optimizer. I started learning about programming more than 20 years ago and have been">
-<meta property="og:image" content="https://avatars1.githubusercontent.com/u/5729858?v=3&s=300">
-<meta property="og:updated_time" content="2016-03-13T12:48:22.182Z">
+<meta property="og:description" content="In Part 1 we have seen some basic UI done with behaviors. Now on to some game logic. Let’s make a shooting turret, Scorched Earth style. We will introduce two new concepts. First, we define an update-">
+<meta property="og:updated_time" content="2016-03-14T10:40:32.535Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="About Me">
-<meta name="twitter:description" content="My name is Elshad Shirinov and I am a passionate programmer, software architect, game developer, team lead and code optimizer. I started learning about programming more than 20 years ago and have been">
-<meta name="twitter:image" content="https://avatars1.githubusercontent.com/u/5729858?v=3&s=300">
+<meta name="twitter:title" content="Game Logic That Behaves - Part 2">
+<meta name="twitter:description" content="In Part 1 we have seen some basic UI done with behaviors. Now on to some game logic. Let’s make a shooting turret, Scorched Earth style. We will introduce two new concepts. First, we define an update-">
   
   
     <link rel="icon" href="/favicon.png">
@@ -63,12 +61,16 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main"><article id="page-undefined" class="article article-type-page" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-behaviors2" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
-    <a href="/BytesAndPieces/about/index.html" class="article-date">
-  <time datetime="2016-03-13T12:34:28.000Z" itemprop="datePublished">2016-03-13</time>
+    <a href="/BytesAndPieces/2016/03/14/behaviors2/" class="article-date">
+  <time datetime="2016-03-14T10:05:40.000Z" itemprop="datePublished">2016-03-14</time>
 </a>
     
+  <div class="article-category">
+    <a class="article-category-link" href="/BytesAndPieces/categories/games/">games</a>
+  </div>
+
   </div>
   <div class="article-inner">
     
@@ -77,7 +79,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      About Me
+      Game Logic That Behaves - Part 2
     </h1>
   
 
@@ -85,19 +87,57 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p><img src="https://avatars1.githubusercontent.com/u/5729858?v=3&amp;s=300" alt=""><br>My name is Elshad Shirinov and I am a passionate programmer, software architect, game developer, team lead and code optimizer. I started learning about programming more than 20 years ago and have been working professionally as a programmer for about 10 years.</p>
-<p><a href="https://www.linkedin.com/in/elshad-shirinov-286a8a24" target="_blank" rel="external">LinkedIn</a><br><a href="https://github.com/ReddogStone" target="_blank" rel="external">GitHub</a></p>
+        <p>In <a href="2016/03/12/behaviors1/">Part 1</a> we have seen some basic UI done with behaviors. Now on to some game logic. Let’s make a shooting turret, <a href="https://en.wikipedia.org/wiki/Scorched_Earth_%28video_game%29" target="_blank" rel="external">Scorched Earth</a> style. We will introduce two new concepts. First, we define an <strong>update-event</strong>, which has the form<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">	type: <span class="string">'update'</span>,</span><br><span class="line">	dt: time delta since last update event</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>This event is produced on every frame and allows for animations and other time-dependent behaviors.</p>
+<p>Second we add a <strong>behavior-system</strong>. This is just a pool of behaviors, which are running independently and are removed upon finishing. We need this to allow behaviors to create other behaviors, which are not part of themselves, in a fire-and-forget manner.</p>
+<p>Having this out of the way we can build the following logic:</p>
+<pre><code>* _Main_ =
+    * Parallel
+        * Repeat _Aim_
+        * Repeat _Shoot_
+        * Run behavior system
+
+* _Aim_ =
+    * Wait for MouseMove
+    * Adjust cannon angle
+
+* _Shoot_ =
+    * Wait for MouseDown
+    * First of
+        * Update shooting power
+        * Wait for MouseUp
+    * Add _Bullet_ behavior to the behavior system
+
+* _Bullet_ =
+    * Add a bullet to the bullet list
+    * Update bullet position until it hits ground
+    * Remove bullet from the list
+    * Add _Explosion_ behavior to the behavior system
+    * Add _Shake_ behavior to the behavior system
+</code></pre><p>I’ll leave <strong>Explosion</strong> and <strong>Shake</strong> behaviors out for brevity.<br>Check out this example here: <a href="https://jsfiddle.net/87r1weks/2/" target="_blank" rel="external">jsFiddle</a>. Note the special <strong>Behavior.update</strong> and <strong>Behavior.interval</strong> behaviors. They consume only <strong>update</strong> events. The <strong>update</strong> behavior ends when then function inside returns something, the <strong>interval</strong> ends after the given time elapses.</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://reddogstone.github.io/about/index.html" data-id="cilrtr8w40001qwn6563nz45r" class="article-share-link">Share</a>
+      <a data-url="http://reddogstone.github.io/BytesAndPieces/2016/03/14/behaviors2/" data-id="cilrtr8w60002qwn6tso23wri" class="article-share-link">Share</a>
       
       
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/BytesAndPieces/tags/Behavior/">Behavior</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/BytesAndPieces/tags/Game-Logic/">Game Logic</a></li></ul>
+
     </footer>
   </div>
   
     
+<nav id="article-nav">
+  
+  
+    <a href="/BytesAndPieces/2016/03/12/behaviors1/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Game Logic That Behaves - Part 1</div>
+    </a>
+  
+</nav>
+
   
 </article>
 

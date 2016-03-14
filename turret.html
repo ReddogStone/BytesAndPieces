@@ -1,0 +1,254 @@
+<html>
+<head>
+	<script src="https://raw.githubusercontent.com/ReddogStone/behavior.js/master/behavior.js"></script>
+	<script src="https://raw.githubusercontent.com/ReddogStone/behavior.js/master/behavior-system.js"></script>
+</head>
+<body>
+  <canvas id="screen" width="600" height="400"></canvas>
+
+ <script>
+
+'use strict';
+
+function getMousePos(canvas, event) {
+	let rect = canvas.getBoundingClientRect();
+	return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+}
+
+const GROUND_COLOR = 'BurlyWood';
+
+const BULLET_COLOR = 'gray';
+const BULLET_BORDER_COLOR = 'black';
+const BULLET_SIZE = 5;
+const BULLET_BASE_SPEED = 1000;
+
+const EXPLOSION_COLOR = 'red';
+const EXPLOSION_BORDER_COLOR = 'darkred';
+const EXPLOSION_SIZE = 50;
+
+const TURRET_COLOR = '#7070FF';
+const TURRET_BORDER_COLOR = '#000030';
+const TURRET_AIM_COLOR = '#FF7070';
+const TURRET_AIM_BORDER_COLOR = '#300000';
+const TURRET_SIZE = 20;
+
+const TURRET_POWER_INC_SPEED = 1;
+
+const GRAVITY = 1000;
+
+function renderTurretBody(context, pos) {
+	context.beginPath();
+	context.arc(turret.pos.x, turret.pos.y, TURRET_SIZE, Math.PI, 2 * Math.PI);
+	context.closePath();
+	context.fillStyle = TURRET_COLOR;
+	context.strokeStyle = TURRET_BORDER_COLOR;
+	context.fill();
+	context.stroke();
+}
+
+function renderTurretCannon(context, pos, aim) {
+	context.save();
+	context.translate(pos.x, pos.y);
+	context.rotate(aim.angle);
+	context.translate(0, -TURRET_SIZE * 0.15);
+
+	context.translate(TURRET_SIZE * 1.5, 0);
+	context.beginPath();
+	let length = 2 * TURRET_SIZE * aim.power;
+	let size = 0.5 * TURRET_SIZE * aim.power;
+	context.moveTo(0, 0);
+	context.lineTo(length, -size);
+	context.lineTo(length, size + TURRET_SIZE * 0.3);
+	context.lineTo(0, TURRET_SIZE * 0.3);
+	context.closePath();
+	context.fillStyle = TURRET_AIM_COLOR;
+	context.strokeStyle = TURRET_AIM_BORDER_COLOR;
+	context.fill();
+
+	context.translate(-TURRET_SIZE * 1.5, 0);
+	context.beginPath();
+	context.rect(0, 0, TURRET_SIZE * 1.5, TURRET_SIZE * 0.3);
+	context.fillStyle = TURRET_COLOR;
+	context.strokeStyle = TURRET_BORDER_COLOR;
+	context.fill();
+	context.stroke();
+
+	context.restore();
+}
+
+function renderTurret(context, turret) {
+	context.lineWidth = 2;
+
+	renderTurretCannon(context, turret.pos, turret.aim);
+	renderTurretBody(context, turret.pos);
+}
+
+function renderGround(context, level) {
+	context.fillStyle = GROUND_COLOR;
+	context.fillRect(-100, level, context.canvas.width + 100, context.canvas.height);
+}
+
+function renderBullet(context, pos) {
+	context.beginPath();
+	context.arc(pos.x, pos.y, BULLET_SIZE, 0, 2 * Math.PI);
+	context.fillStyle = BULLET_COLOR;
+	context.strokeStyle = BULLET_BORDER_COLOR;
+	context.lineWidth = 2;
+	context.fill();
+	context.stroke();
+}
+
+function renderExplosion(context, pos, radius, alpha) {
+	context.globalAlpha = alpha;
+
+	context.beginPath();
+	context.arc(pos.x, pos.y, radius, 0, 2 * Math.PI);
+	context.fillStyle = EXPLOSION_COLOR;
+	context.strokeStyle = EXPLOSION_BORDER_COLOR;
+	context.lineWidth = 2;
+	context.fill();
+	context.stroke();
+
+	context.globalAlpha = 1;
+}
+
+function renderFrame(context, camera, turret, groundLevel, bullets, explosions) {
+	context.save();
+	context.translate(camera.x, camera.y);
+
+	bullets.forEach(function(bullet) {
+		renderBullet(context, bullet);
+	});
+
+	explosions.forEach(function(explosion) {
+		renderExplosion(context, explosion.pos, explosion.radius, explosion.alpha);
+	});
+
+	renderTurret(context, turret);
+	renderGround(context, groundLevel);
+
+	context.restore();
+}
+
+//======================== GAME LOGIC ========================
+let camera = { x: 0, y: 0 };
+let groundLevel = 300;
+let turret = {
+	pos: { x: 100, y: 300 },
+	aim: { angle: 0, power: 0 }
+};
+let bullets = [];
+let explosions = [];
+
+let behaviorSystem = BehaviorSystem();
+function runBehaviorSystem(event) {
+	behaviorSystem.update(event);
+	return { done: false };
+};
+
+let aim = () => Behavior.run(function*() {
+	let event = yield Behavior.type('mousemove');
+	let dx = event.pos.x - turret.pos.x;
+	let dy = event.pos.y - turret.pos.y;
+	turret.aim.angle = Math.atan2(dy, dx);
+});
+
+function shake() {
+	let start = { x: camera.x, y: camera.y };
+	return Behavior.interval(0.5, function(progress) {
+		camera.x = start.x + Math.sin(5 * progress * Math.PI) * 5;
+		camera.y = start.y + Math.sin(3 * progress * Math.PI) * 4;
+	});
+}
+
+function explosion(pos) {
+	let explosion = {
+		pos: pos,
+		radius: 0,
+		alpha: 1
+	};
+	explosions.push(explosion);
+	return Behavior.run(function*() {
+		yield Behavior.interval(0.5, function(progress) {
+			explosion.radius = EXPLOSION_SIZE * Math.sin(progress * 0.5 * Math.PI);
+			explosion.alpha = 1 - progress;
+		});
+		explosions.splice(bullets.indexOf(explosion), 1);
+	});
+}
+
+function bullet(pos, angle, power) {
+	let bulletPos = { x: pos.x, y: pos.y };
+	bullets.push(bulletPos);
+
+	let v = {
+		x: Math.cos(angle) * power * BULLET_BASE_SPEED,
+		y: Math.sin(angle) * power * BULLET_BASE_SPEED
+	};
+	return Behavior.run(function*() {
+		yield Behavior.update(function(dt) {
+			v.y += GRAVITY * dt;
+			bulletPos.x += v.x * dt;
+			bulletPos.y += v.y * dt;
+
+			if (bulletPos.y > groundLevel) {
+				bulletPos.y = groundLevel;
+				behaviorSystem.add(shake());
+				behaviorSystem.add(explosion(bulletPos));
+
+				return true;
+			}
+		});
+
+		bullets.splice(bullets.indexOf(bulletPos), 1);
+	});
+}
+
+let shoot = () => Behavior.run(function*() {
+	let event = yield Behavior.type('mousedown');
+	yield Behavior.first(
+		Behavior.update(function(dt) { turret.aim.power = Math.min(1, turret.aim.power + dt * TURRET_POWER_INC_SPEED); }),
+		Behavior.type('mouseup')
+	);
+
+	behaviorSystem.add(bullet(turret.pos, turret.aim.angle, turret.aim.power));
+
+	turret.aim.power = 0;
+});
+
+let behavior = Behavior.parallel(
+	Behavior.repeat(aim),
+	Behavior.repeat(shoot),
+	runBehaviorSystem
+);
+//======================== GAME LOGIC END ========================
+
+let canvas = document.getElementById('screen');
+let context = canvas.getContext('2d');
+
+function handleMouseEvent(event) {
+	let pos = getMousePos(canvas, event);
+	behavior({ type: event.type, pos: pos });
+}
+
+canvas.addEventListener('mousedown', handleMouseEvent, true);
+canvas.addEventListener('mousemove', handleMouseEvent, true);
+document.addEventListener('mouseup', handleMouseEvent, true);
+
+let lastTime = performance.now();	
+(function render() {
+	let currentTime = performance.now();
+	let delta = (currentTime - lastTime) * 0.001;
+	lastTime = currentTime;
+
+	behavior({ type: 'update', dt: delta });
+
+	context.clearRect(0, 0, canvas.width, canvas.height);
+	renderFrame(context, camera, turret, groundLevel, bullets, explosions);
+
+	requestAnimationFrame(render);
+})();
+
+</script>
+</body>
+</html>
