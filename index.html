@@ -51,7 +51,7 @@
       </nav>
       <nav id="sub-nav">
         
-        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Rechercher"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://reddogstone.github.io"></form>
@@ -90,7 +90,7 @@
       
         <p>In <a href="2016/03/12/behaviors1/">Part 1</a> we have seen some basic UI done with behaviors. Now on to some game logic. Let’s make a shooting turret, <a href="https://en.wikipedia.org/wiki/Scorched_Earth_%28video_game%29" target="_blank" rel="external">Scorched Earth</a> style. We will introduce two new concepts. First, we define an <strong>update-event</strong>, which has the form<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">	type: <span class="string">'update'</span>,</span><br><span class="line">	dt: time delta since last update event</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>This event is produced on every frame and allows for animations and other time-dependent behaviors.</p>
-<p>Second we add a <strong>behavior-system</strong>. This is just a pool of behaviors, which are running independently and are removed upon finishing. We need this to allow behaviors to create other behaviors, which are not part of themselves, in a fire-and-forget manner.</p>
+<p>Second we add a <strong>behavior-system</strong>. This is just a pool of behaviors, which are running independently and are removed upon finishing. This allows a behavior to start another behavior “on the side”. This new behavior will not be part of the creating behavior. It will run separately in a fire-and-forget manner.</p>
 <p>Having this out of the way we can build the following logic:</p>
 <pre><code>* _Main_ =
     * Parallel
@@ -120,7 +120,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://reddogstone.github.io/BytesAndPieces/2016/03/14/behaviors2/" data-id="cilrtr8w60002qwn6tso23wri" class="article-share-link">Share</a>
+      <a data-url="http://reddogstone.github.io/BytesAndPieces/2016/03/14/behaviors2/" data-id="cilrtr8w60002qwn6tso23wri" class="article-share-link">Partager</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/BytesAndPieces/tags/behavior/">behavior</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/BytesAndPieces/tags/game-logic/">game logic</a></li></ul>
@@ -172,7 +172,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://reddogstone.github.io/BytesAndPieces/2016/03/12/behaviors1/" data-id="cilrtrgi90005qwn6jbahzj0m" class="article-share-link">Share</a>
+      <a data-url="http://reddogstone.github.io/BytesAndPieces/2016/03/12/behaviors1/" data-id="cilrtrgi90005qwn6jbahzj0m" class="article-share-link">Partager</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/BytesAndPieces/tags/behavior/">behavior</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/BytesAndPieces/tags/user-interface/">user interface</a></li></ul>
@@ -191,7 +191,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Categories</h3>
+    <h3 class="widget-title">Catégories</h3>
     <div class="widget">
       <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/BytesAndPieces/categories/games/">games</a></li></ul>
     </div>
@@ -201,7 +201,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Tags</h3>
+    <h3 class="widget-title">Mot-clés</h3>
     <div class="widget">
       <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/BytesAndPieces/tags/behavior/">behavior</a></li><li class="tag-list-item"><a class="tag-list-link" href="/BytesAndPieces/tags/game-logic/">game logic</a></li><li class="tag-list-item"><a class="tag-list-link" href="/BytesAndPieces/tags/user-interface/">user interface</a></li></ul>
     </div>
@@ -211,7 +211,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Tag Cloud</h3>
+    <h3 class="widget-title">Nuage de mot-clés</h3>
     <div class="widget tagcloud">
       <a href="/BytesAndPieces/tags/behavior/" style="font-size: 20px;">behavior</a> <a href="/BytesAndPieces/tags/game-logic/" style="font-size: 10px;">game logic</a> <a href="/BytesAndPieces/tags/user-interface/" style="font-size: 10px;">user interface</a>
     </div>
@@ -230,7 +230,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
+    <h3 class="widget-title">Articles récents</h3>
     <div class="widget">
       <ul>
         
@@ -255,7 +255,7 @@
   <div class="outer">
     <div id="footer-info" class="inner">
       &copy; 2016 Elshad Shirinov<br>
-      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+      Propulsé by <a href="http://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
 </footer>
